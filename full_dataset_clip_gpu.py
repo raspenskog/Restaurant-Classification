@@ -5,7 +5,6 @@ import torch
 from transformers import CLIPProcessor, CLIPModel
 from datetime import datetime
 import time
-import requests  # Import the requests library for sending HTTP requests
 
 # Enable loading of truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -62,8 +61,3 @@ summary = f"Finished iteration on {total_images} images after {int(minutes)} min
 print(summary)
 with open(os.path.join(target_dir, 'log.txt'), 'w') as log_file:
     log_file.write(summary + '\n')
-
-# Sending a webhook upon completion
-webhook_url = "https://ha.raspenskog.se/api/webhook/python"
-response = requests.post(webhook_url)
-print(f"Webhook sent, status code: {response.status_code}")
