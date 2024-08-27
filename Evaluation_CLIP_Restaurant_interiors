@@ -28,8 +28,8 @@ processor = CLIPProcessor.from_pretrained(model_name, do_rescale=False)
 # Image directories
 restaurant_dir = os.path.join(source_dir, "restaurant_interiors")
 non_restaurant_dirs = [
-    os.path.join(source_dir, "non_restaurant_interiors"),
-    os.path.join(source_dir, "non_restaurant_exteriors")
+    os.path.join(source_dir, "non_restaurant_interiors"), # Path to subdirectory of non-restaurant interior images
+    os.path.join(source_dir, "exteriors") # Path to subdirectory of exterior images
 ]
 
 # Collecting image paths
@@ -53,10 +53,10 @@ transform = transforms.Compose([
 ])
 
 # Specify a single prompt
-prompt = "A black-and-white photograph of a 1930s restaurant interior"
+prompt = "A vintage black and white photo of a historical 20th century dining room interior. The photograph features time-appropriate vintage furniture and decor that reflects the atmosphere of 20th century eating and drinking culture."
 
 # Specify the logit threshold to test
-logit_threshold = 16  # Set your desired threshold here
+logit_threshold = 20  # Set your desired threshold here
 
 # Function to process a single image
 def process_image(image_path, label, logit_threshold, text_description):
