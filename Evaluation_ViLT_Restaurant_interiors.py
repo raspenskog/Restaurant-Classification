@@ -5,7 +5,6 @@ from datetime import datetime
 from transformers import ViltProcessor, ViltForQuestionAnswering
 from PIL import Image
 import torch
-import torchvision.transforms as transforms
 
 # Paths
 base_dir = r'path_to_ground_truth_data'
@@ -13,7 +12,7 @@ log_dir = os.path.join(base_dir, 'evaluation_logs')
 os.makedirs(log_dir, exist_ok=True)
 
 # Generate a unique log file name based on the current timestamp
-log_filename = f"VQA_ViLT_{datetime.now().strftime('%Y%m%d_%H%M%S')}_best_question_with_augmentation.log"
+log_filename = f"VQA_ViLT_{datetime.now().strftime('%Y%m%d_%H%M%S')}_best_question.log"
 log_file_path = os.path.join(log_dir, log_filename)
 
 # Initialize the processor and model
@@ -29,42 +28,27 @@ directories = {
 
 # Define the question variations
 question_variations = [
-    "Is this a black-and-white photo of the interior of a restaurant?",
-    "Does this image show a historical restaurant interior in black-and-white?",
-    "Is the restaurant interior shown in black-and-white?",
-    "Is this a black-and-white image of a 1930s restaurant interior scene?",
-    "Is this an interior view of a historic restaurant?",
-    "Does this image show a preserved interior of a historical restaurant?",
-    "Is this a black-and-white photo showing the inside of a restaurant?",
-    "Does this image depict the inside of a classic, historical restaurant?",
-    "Is this a black-and-white photograph of a 1930s restaurant interior?",
-    "Is this a grayscale image capturing the interior of a restaurant?",
-    "Is the interior of a restaurant captured in this black-and-white photograph?",
-    "Does this photograph capture a 1930s restaurant interior in black-and-white?",
-    "Is this a classic 1930s restaurant interior captured in black-and-white?",
-    "Is this a black-and-white photograph featuring the interior of a 1930s restaurant?",
-    "Is this a black-and-white photograph of a vintage restaurant's interior space?"
+    "Is this a restaurant interior?",
+    "Is this picture taken inside a restaurant?",
+    "Does this image show the inside of a restaurant?",
+    "Is this photo taken inside a restaurant?",
+    "Is this an interior of a restaurant?",
+    "Does this image depict a restaurant interior?",
+    "Is this a picture of a restaurant's interior?",
+    "Is this an image of a restaurant's interior?",
+    "Is this photograph showing the interior of a restaurant?",
+    "Is this a restaurant?",
+    "Does this image depict a restaurant?",
+    "Is this an image of a restaurant?",
+    "Is this a restaurant scene?",
+    "Does this picture show the inside of a restaurant?",
+    "Is this photo showing a restaurant interior?"
 ]
-
-# Define data augmentation and preprocessing techniques
-transform = transforms.Compose([
-    transforms.Resize((256, 256)),          # Resize to a consistent size
-    transforms.RandomHorizontalFlip(),      # Randomly flip the image horizontally
-    transforms.RandomRotation(15),          # Randomly rotate the image by 15 degrees
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1), # Randomly change brightness, contrast, etc.
-    transforms.ToTensor(),                  # Convert the image to a PyTorch tensor
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # Normalize the tensor
-])
 
 # Function to process a single image and question
 def process_single_image(image_path, question):
     try:
         image = Image.open(image_path).convert('RGB')  # Ensure image is in RGB format
-        image = transform(image)  # Apply data augmentation and preprocessing
-
-        # Since ViLT expects PIL images, convert back from tensor to PIL Image
-        image = transforms.ToPILImage()(image)
-
         inputs = processor(images=image, text=question, return_tensors="pt")
 
         # Get model predictions
