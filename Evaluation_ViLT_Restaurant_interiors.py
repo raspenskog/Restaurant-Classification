@@ -23,7 +23,7 @@ model = ViltForQuestionAnswering.from_pretrained("dandelin/vilt-b32-finetuned-vq
 directories = {
     'restaurant_interiors': os.path.join(base_dir, 'restaurant_interiors'),
     'non_restaurant_interiors': os.path.join(base_dir, 'non_restaurant_interiors'),
-    'non_restaurant_exteriors': os.path.join(base_dir, 'non_restaurant_exteriors')
+    'exteriors': os.path.join(base_dir, 'exteriors')
 }
 
 # Define the question variations
