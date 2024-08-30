@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="huggingface_hu
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 # Initialize paths and model details
-source_dir = "X:/Path_to_images"
+source_dir = "path_to_images"
 model_name = "openai/clip-vit-large-patch14"
 
 # Device setup
