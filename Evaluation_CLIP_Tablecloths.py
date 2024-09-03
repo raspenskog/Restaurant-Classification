@@ -191,6 +191,12 @@ with tqdm(total=total_combinations, desc="Overall Progress", ncols=100) as overa
                         })
                     results['per_class'][class_name]['total'] += 1
 
+            # Log incorrect predictions in detail
+            if results['incorrect_predictions'] > 0:
+                logging.info(f"Incorrect Predictions for Prompts - Tablecloth: {prompt_tablecloth} | Bare Table: {prompt_bare_table}")
+                for detail in results['incorrect_details']:
+                    logging.info(f"Image: {detail['image']}, Predicted: {detail['predicted_contains_tablecloth']}, Actual: {detail['actual_contains_tablecloth']}")
+
             # Calculate accuracy for the current prompt pair
             accuracy = results['correct_predictions'] / results['total_images']
             logging.info(f"Tested Prompts - Tablecloth: {prompt_tablecloth} | Bare Table: {prompt_bare_table} | Accuracy: {accuracy:.4f}")
