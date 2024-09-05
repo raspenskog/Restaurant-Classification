@@ -20,7 +20,7 @@ class_dirs = {
     'Class_1-2': os.path.join(base_dir, 'Class_1-2'),
     'Class_3': os.path.join(base_dir, 'Class_3')
 }
-annotations_file_path = os.path.join(base_dir, 'annotations_vqa.json')
+annotations_file_path = os.path.join(base_dir, 'annotations.json')
 
 # Initialize the processor and model
 processor = ViltProcessor.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
