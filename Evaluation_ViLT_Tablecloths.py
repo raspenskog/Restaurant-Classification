@@ -8,7 +8,7 @@ from PIL import Image
 import torch
 
 # Paths
-base_dir = r'D:/Files/Moderna_Digitalt_museum/Full_Dataset_Final/2024_08_15_20'
+base_dir = r'path_to_root_directory'
 log_dir = os.path.join(base_dir, 'tablecloth_logs')
 os.makedirs(log_dir, exist_ok=True)
 
