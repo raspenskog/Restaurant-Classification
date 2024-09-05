@@ -8,7 +8,7 @@ from PIL import Image
 import torch
 
 # Paths
-base_dir = r'path_to_root_directory'
+base_dir = r'path_to_root_directory'  # Update this to the correct base directory
 log_dir = os.path.join(base_dir, 'tablecloth_logs')
 os.makedirs(log_dir, exist_ok=True)
 
@@ -35,15 +35,23 @@ expected_answers = {}
 
 for item in annotations:
     image_filename = item['data']['image']
-    expected_answer = "Yes" if any(
-        "Tablecloth" in result['value']['choices']
-        for annotation in item.get('annotations', [])
-        for result in annotation.get('result', [])
-    ) else "No"
+    # Expected answer logic for both cases
+    expected_answer = {
+        'positive': "Yes" if any(
+            "Tablecloth" in result['value']['choices']
+            for annotation in item.get('annotations', [])
+            for result in annotation.get('result', [])
+        ) else "No",
+        'negative': "No" if any(
+            "Tablecloth" in result['value']['choices']
+            for annotation in item.get('annotations', [])
+            for result in annotation.get('result', [])
+        ) else "Yes"
+    }
     expected_answers[image_filename] = expected_answer
 
-# Question variations to be tested
-question_variations = [
+# Positive and negative question variations
+positive_question_variations = [
     "Are there dining tables with tablecloths?",
     "Is there a dining table with a tablecloth?",
     "Are there vintage tables covered with tablecloths?",
@@ -76,6 +84,35 @@ question_variations = [
     "Is there a retro table covered with a tablecloth?"
 ]
 
+negative_question_variations = [
+    "Is this a dining table without a tablecloth?",
+    "Are these dining tables without tablecloths?",
+    "Is this a vintage table without a tablecloth?",
+    "Are these vintage tables without tablecloths?",
+    "Is this a rustic table with no tablecloth?",
+    "Are these rustic tables with no tablecloths?",
+    "Is this a table with no covering?",
+    "Are these tables with no coverings?",
+    "Is this a dining table with no covering?",
+    "Are these dining tables with no coverings?",
+    "Is this a wooden table with no tablecloth?",
+    "Are these wooden tables with no tablecloths?",
+    "Is this a simple table with an uncovered surface?",
+    "Are these simple tables with uncovered surfaces?",
+    "Is this a table without a tablecloth, ready to be set?",
+    "Are these tables without tablecloths, ready to be set?",
+    "Is this a plain dining table?",
+    "Are these plain dining tables?",
+    "Is this a simple dining table?",
+    "Are these simple dining tables?",
+    "Is this a tavern table?",
+    "Are these tavern tables?",
+    "Is this a table in a simple tavern?",
+    "Are these tables in simple taverns?",
+    "Is this a modest table with no tablecloth?",
+    "Are these modest tables with no tablecloths?"
+]
+
 # Function to process a single image and question
 def process_single_image(image_path, question):
     try:
@@ -97,37 +134,47 @@ def process_single_image(image_path, question):
         return None
 
 # Test all questions and log performance
-question_performance = []
+def test_questions(question_variations, expected_answer_key):
+    question_performance = []
 
-for question in question_variations:
-    total_images = 0
-    correct_predictions = 0
-    start_time = time.time()
+    for question in question_variations:
+        total_images = 0
+        correct_predictions = 0
+        start_time = time.time()
 
-    # Iterate over the images in the directories and check against annotations
-    for class_name, class_dir in class_dirs.items():
-        for image_filename in tqdm(os.listdir(class_dir), desc=f"Processing {class_name} with question '{question}'", unit="image"):
-            image_path = os.path.join(class_dir, image_filename)
+        # Iterate over the images in the directories and check against annotations
+        for class_name, class_dir in class_dirs.items():
+            for image_filename in tqdm(os.listdir(class_dir), desc=f"Processing {class_name} with question '{question}'", unit="image"):
+                image_path = os.path.join(class_dir, image_filename)
 
-            # Check if the image is in the annotations
-            if image_filename in expected_answers:
-                expected_answer = expected_answers[image_filename]
-                model_answer = process_single_image(image_path, question)
+                # Check if the image is in the annotations
+                if image_filename in expected_answers:
+                    expected_answer = expected_answers[image_filename][expected_answer_key]
+                    model_answer = process_single_image(image_path, question)
 
-                if model_answer is not None:
-                    total_images += 1
-                    # Case-insensitive comparison
-                    if model_answer.lower() == expected_answer.lower():
-                        correct_predictions += 1
+                    if model_answer is not None:
+                        total_images += 1
+                        # Case-insensitive comparison
+                        if model_answer.lower() == expected_answer.lower():
+                            correct_predictions += 1
 
-    # Calculate performance for this question
-    accuracy = correct_predictions / total_images * 100 if total_images > 0 else 0
-    eta = time.time() - start_time
+        # Calculate performance for this question
+        accuracy = correct_predictions / total_images * 100 if total_images > 0 else 0
+        eta = time.time() - start_time
 
-    question_performance.append((question, accuracy, total_images, correct_predictions, eta))
+        question_performance.append((question, accuracy, total_images, correct_predictions, eta))
+
+    return question_performance
+
+# Running for both positive and negative questions
+positive_performance = test_questions(positive_question_variations, 'positive')
+negative_performance = test_questions(negative_question_variations, 'negative')
+
+# Combine the performance results
+combined_performance = positive_performance + negative_performance
 
 # Find the best-performing question
-best_question = max(question_performance, key=lambda x: x[1])
+best_question = max(combined_performance, key=lambda x: x[1])
 
 # Log wrong predictions for the best question
 wrong_predictions = []
@@ -138,7 +185,7 @@ for class_name, class_dir in class_dirs.items():
         image_path = os.path.join(class_dir, image_filename)
 
         if image_filename in expected_answers:
-            expected_answer = expected_answers[image_filename]
+            expected_answer = expected_answers[image_filename]['positive'] if best_question[0] in positive_question_variations else expected_answers[image_filename]['negative']
             model_answer = process_single_image(image_path, best_question[0])
 
             if model_answer is not None and model_answer.lower() != expected_answer.lower():
@@ -147,7 +194,7 @@ for class_name, class_dir in class_dirs.items():
 # Writing the log file
 with open(log_file_path, 'w') as log_file:
     log_file.write(f"Performance Summary for Each Question:\n")
-    for q, acc, total, correct, time_taken in question_performance:
+    for q, acc, total, correct, time_taken in combined_performance:
         log_file.write(f"Question: {q}\n")
         log_file.write(f"Accuracy: {acc:.2f}% ({correct}/{total})\n")
         log_file.write(f"Time Taken: {time_taken:.2f} seconds\n\n")
@@ -160,10 +207,4 @@ with open(log_file_path, 'w') as log_file:
 
     log_file.write(f"\nIncorrect Predictions for Best-Performing Question:\n")
     for image_filename, expected_answer, model_answer in wrong_predictions:
-        log_file.write(f"Image: {image_filename}\n")
-        log_file.write(f"Expected: {expected_answer}\n")
-        log_file.write(f"Model Answer: {model_answer}\n\n")
-
-print(f"Log file saved to {log_file_path}")
-print(f"Best-performing question: {best_question[0]} with accuracy {best_question[1]:.2f}%")
-print(f"Incorrect predictions logged in {log_file_path}")
+        log_file.write(f"Image:
